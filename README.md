@@ -1,6 +1,6 @@
 # goit-rdb-fp
 
-Фінального проєкт:
+Фінальний проєкт:
 
 ### Завдання 1:
 
@@ -14,11 +14,15 @@
 ---
 
 ```sql
-
+CREATE DATABASE IF NOT EXISTS pandemic;
 ```
 
-_p1_date.png_
-![p1_date.png](./p1_date.png)
+```sql
+USE pandemic;
+```
+
+_1_Create_DB.png_
+![1_Create_DB.png](./1_Create_DB.png)
 
 ---
 
