@@ -32,12 +32,108 @@ _1_Create_DB.png_
 
 ---
 
+- Створення таблиці `countries`
 ```sql
+CREATE TABLE countries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    entity_name VARCHAR(255) NOT NULL,
+    entity_code VARCHAR(50) DEFAULT NULL,
+    UNIQUE KEY (entity_name)
+);
+```
+- Створення таблиці `disease_reports`
+```sql
+CREATE TABLE disease_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    country_id INT NOT NULL,
+    report_year INT NOT NULL,
+    disease_name VARCHAR(100) NOT NULL,
+    case_count DOUBLE DEFAULT NULL,
+    FOREIGN KEY (country_id) REFERENCES countries(id)
+);
+```
+- Заповнення таблиці `countries`
+```sql
+INSERT INTO countries (entity_name, entity_code)
+SELECT DISTINCT Entity, NULLIF(Code, '') 
+FROM infectious_cases;
+```
+- Заповнення таблиці `disease_reports`
+```sql
+INSERT INTO disease_reports (country_id, report_year, disease_name, case_count)
+SELECT 
+    c.id, 
+    ic.Year, 
+    'yaws', 
+    NULLIF(ic.Number_yaws, '') -- Конвертація порожніх рядків у NULL
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.Number_yaws != '' OR ic.Number_yaws IS NOT NULL
 
+UNION ALL
+
+SELECT c.id, ic.Year, 'polio', ic.polio_cases 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.polio_cases IS NOT NULL
+
+UNION ALL
+
+SELECT c.id, ic.Year, 'guinea_worm', ic.cases_guinea_worm 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.cases_guinea_worm IS NOT NULL
+
+UNION ALL
+
+SELECT c.id, ic.Year, 'rabies', ic.Number_rabies 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.Number_rabies IS NOT NULL
+
+UNION ALL
+
+SELECT c.id, ic.Year, 'malaria', ic.Number_malaria 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.Number_malaria IS NOT NULL
+
+UNION ALL
+
+SELECT c.id, ic.Year, 'hiv', ic.Number_hiv 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.Number_hiv IS NOT NULL
+
+UNION ALL
+
+SELECT c.id, ic.Year, 'tuberculosis', ic.Number_tuberculosis 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.Number_tuberculosis IS NOT NULL
+
+UNION ALL
+
+SELECT c.id, ic.Year, 'smallpox', NULLIF(ic.Number_smallpox, '') 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.Number_smallpox != '' OR ic.Number_smallpox IS NOT NULL
+
+UNION ALL
+
+SELECT c.id, ic.Year, 'cholera', ic.Number_cholera_cases 
+FROM infectious_cases ic
+JOIN countries c ON ic.Entity = c.entity_name
+WHERE ic.Number_cholera_cases IS NOT NULL;
 ```
 
-_p1_date.png_
-![p1_date.png](./p1_date.png)
+```sql
+SELECT COUNT(*) FROM infectious_cases
+-- Result: 10521
+```
+
+_2_3N.png_
+![2_3N.png](./2_3N.png)
 
 ---
 
