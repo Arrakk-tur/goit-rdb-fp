@@ -148,11 +148,24 @@ _2_3N.png_
 ---
 
 ```sql
-
+SELECT 
+    c.entity_name, 
+    c.entity_code,
+    AVG(dr.case_count) AS avg_rabies,
+    MIN(dr.case_count) AS min_rabies,
+    MAX(dr.case_count) AS max_rabies,
+    SUM(dr.case_count) AS total_rabies
+FROM disease_reports dr
+JOIN countries c ON dr.country_id = c.id
+WHERE dr.disease_name = 'rabies' 
+  AND dr.case_count IS NOT NULL -- фільтруємо NULL значення
+GROUP BY c.id, c.entity_name, c.entity_code
+ORDER BY avg_rabies DESC
+LIMIT 10;
 ```
 
-_p1_date.png_
-![p1_date.png](./p1_date.png)
+_3_Number_rabies.png_
+![3_Number_rabies.png](./3_Number_rabies.png)
 
 ---
 
