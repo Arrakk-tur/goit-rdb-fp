@@ -181,11 +181,22 @@ _3_Number_rabies.png_
 ---
 
 ```sql
-
+SELECT 
+    report_year,
+    -- Зміна дати
+    STR_TO_DATE(CONCAT(report_year, '-01-01'), '%Y-%m-%d') AS start_of_year_date,
+    -- Поточна дата
+    CURDATE() AS today_date,
+    -- Різниця в роках
+    TIMESTAMPDIFF(YEAR, STR_TO_DATE(CONCAT(report_year, '-01-01'), '%Y-%m-%d'), CURDATE()) AS year_difference
+FROM 
+    (SELECT DISTINCT report_year FROM disease_reports) AS unique_years
+ORDER BY 
+    report_year DESC;
 ```
 
-_p1_date.png_
-![p1_date.png](./p1_date.png)
+_4_Year.png_
+![4_Year.png](./4_Year.png)
 
 ---
 
