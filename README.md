@@ -207,11 +207,42 @@ _4_Year.png_
 
 ---
 
+- Функція
 ```sql
+DELIMITER //
 
+CREATE FUNCTION calculate_year_diff(input_year INT) 
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE date_value DATE;
+    DECLARE diff INT;
+    
+    -- Зміна дати
+    SET date_value = STR_TO_DATE(CONCAT(input_year, '-01-01'), '%Y-%m-%d');
+    
+    -- Різниця в роках
+    SET diff = TIMESTAMPDIFF(YEAR, date_value, CURDATE());
+    
+    RETURN diff;
+END //
+
+DELIMITER ;
 ```
 
-_p1_date.png_
-![p1_date.png](./p1_date.png)
+- Виконання
+```sql
+SELECT 
+    report_year,
+    calculate_year_diff(report_year) AS years_since_report
+FROM (
+    SELECT DISTINCT report_year 
+    FROM disease_reports
+) AS unique_years
+ORDER BY report_year DESC;
+```
+
+_5_Function.png_
+![5_Function.png](./5_Function.png)
 
 ---
