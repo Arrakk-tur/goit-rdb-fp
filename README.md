@@ -21,6 +21,24 @@ CREATE DATABASE IF NOT EXISTS pandemic;
 USE pandemic;
 ```
 
+DDL
+```sql
+CREATE TABLE `infectious_cases` (
+  `Entity` varchar(50) DEFAULT NULL,
+  `Code` varchar(50) DEFAULT NULL,
+  `Year` int DEFAULT NULL,
+  `Number_yaws` double DEFAULT NULL,
+  `polio_cases` double DEFAULT NULL,
+  `cases_guinea_worm` double DEFAULT NULL,
+  `Number_rabies` double DEFAULT NULL,
+  `Number_malaria` double DEFAULT NULL,
+  `Number_hiv` double DEFAULT NULL,
+  `Number_tuberculosis` double DEFAULT NULL,
+  `Number_smallpox` double DEFAULT NULL,
+  `Number_cholera_cases` double DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+```
+
 _1_Create_DB.png_
 ![1_Create_DB.png](./1_Create_DB.png)
 
@@ -55,80 +73,33 @@ CREATE TABLE disease_reports (
 - Заповнення таблиці `countries`
 ```sql
 INSERT INTO countries (entity_name, entity_code)
-SELECT DISTINCT Entity, NULLIF(Code, '') 
+SELECT DISTINCT Entity, Code 
 FROM infectious_cases;
 ```
 - Заповнення таблиці `disease_reports`
 ```sql
 INSERT INTO disease_reports (country_id, report_year, disease_name, case_count)
-SELECT 
-    c.id, 
-    ic.Year, 
-    'yaws', 
-    NULLIF(ic.Number_yaws, '') -- Конвертація порожніх рядків у NULL
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.Number_yaws != '' OR ic.Number_yaws IS NOT NULL
-
+SELECT c.id, ic.Year, 'yaws', ic.Number_yaws FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.Number_yaws IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'polio', ic.polio_cases 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.polio_cases IS NOT NULL
-
+SELECT c.id, ic.Year, 'polio', ic.polio_cases FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.polio_cases IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'guinea_worm', ic.cases_guinea_worm 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.cases_guinea_worm IS NOT NULL
-
+SELECT c.id, ic.Year, 'guinea_worm', ic.cases_guinea_worm FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.cases_guinea_worm IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'rabies', ic.Number_rabies 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.Number_rabies IS NOT NULL
-
+SELECT c.id, ic.Year, 'rabies', ic.Number_rabies FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.Number_rabies IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'malaria', ic.Number_malaria 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.Number_malaria IS NOT NULL
-
+SELECT c.id, ic.Year, 'malaria', ic.Number_malaria FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.Number_malaria IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'hiv', ic.Number_hiv 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.Number_hiv IS NOT NULL
-
+SELECT c.id, ic.Year, 'hiv', ic.Number_hiv FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.Number_hiv IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'tuberculosis', ic.Number_tuberculosis 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.Number_tuberculosis IS NOT NULL
-
+SELECT c.id, ic.Year, 'tuberculosis', ic.Number_tuberculosis FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.Number_tuberculosis IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'smallpox', NULLIF(ic.Number_smallpox, '') 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.Number_smallpox != '' OR ic.Number_smallpox IS NOT NULL
-
+SELECT c.id, ic.Year, 'smallpox', ic.Number_smallpox FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.Number_smallpox IS NOT NULL
 UNION ALL
-
-SELECT c.id, ic.Year, 'cholera', ic.Number_cholera_cases 
-FROM infectious_cases ic
-JOIN countries c ON ic.Entity = c.entity_name
-WHERE ic.Number_cholera_cases IS NOT NULL;
+SELECT c.id, ic.Year, 'cholera', ic.Number_cholera_cases FROM infectious_cases ic JOIN countries c ON ic.Entity = c.entity_name WHERE ic.Number_cholera_cases IS NOT NULL;
 ```
 
 ```sql
-SELECT COUNT(*) FROM infectious_cases
+SELECT COUNT(*) FROM infectious_cases;
 -- Result: 10521
 ```
 
@@ -149,18 +120,20 @@ _2_3N.png_
 
 ```sql
 SELECT 
-    c.entity_name, 
-    c.entity_code,
-    AVG(dr.case_count) AS avg_rabies,
-    MIN(dr.case_count) AS min_rabies,
-    MAX(dr.case_count) AS max_rabies,
-    SUM(dr.case_count) AS total_rabies
-FROM disease_reports dr
-JOIN countries c ON dr.country_id = c.id
-WHERE dr.disease_name = 'rabies' 
-  AND dr.case_count IS NOT NULL -- фільтруємо NULL значення
-GROUP BY c.id, c.entity_name, c.entity_code
-ORDER BY avg_rabies DESC
+    Entity,
+    Code,
+    AVG(Number_rabies) AS average_rabies,
+    MIN(Number_rabies) AS min_rabies,
+    MAX(Number_rabies) AS max_rabies,
+    SUM(Number_rabies) AS sum_rabies
+FROM 
+    pandemic.infectious_cases
+WHERE 
+    Number_rabies IS NOT NULL 
+GROUP BY 
+    Entity, Code
+ORDER BY 
+    average_rabies DESC
 LIMIT 10;
 ```
 
@@ -182,17 +155,12 @@ _3_Number_rabies.png_
 
 ```sql
 SELECT 
-    report_year,
-    -- Зміна дати
-    STR_TO_DATE(CONCAT(report_year, '-01-01'), '%Y-%m-%d') AS start_of_year_date,
-    -- Поточна дата
+    Year,
+    MAKEDATE(Year, 1) AS start_of_year_date,
     CURDATE() AS today_date,
-    -- Різниця в роках
-    TIMESTAMPDIFF(YEAR, STR_TO_DATE(CONCAT(report_year, '-01-01'), '%Y-%m-%d'), CURDATE()) AS year_difference
+    TIMESTAMPDIFF(YEAR, MAKEDATE(Year, 1), CURDATE()) AS year_difference
 FROM 
-    (SELECT DISTINCT report_year FROM disease_reports) AS unique_years
-ORDER BY 
-    report_year DESC;
+    pandemic.infectious_cases;
 ```
 
 _4_Year.png_
@@ -211,20 +179,19 @@ _4_Year.png_
 ```sql
 DELIMITER //
 
-CREATE FUNCTION calculate_year_diff(input_year INT) 
+CREATE FUNCTION calculate_year_diff(input_year INT)
 RETURNS INT
-DETERMINISTIC
+DETERMINISTIC 
+NO SQL
 BEGIN
     DECLARE date_value DATE;
-    DECLARE diff INT;
+    DECLARE years_diff INT;
     
-    -- Зміна дати
-    SET date_value = STR_TO_DATE(CONCAT(input_year, '-01-01'), '%Y-%m-%d');
+    SET date_value = MAKEDATE(input_year, 1);
     
-    -- Різниця в роках
-    SET diff = TIMESTAMPDIFF(YEAR, date_value, CURDATE());
+    SET years_diff = TIMESTAMPDIFF(YEAR, date_value, CURDATE());
     
-    RETURN diff;
+    RETURN years_diff;
 END //
 
 DELIMITER ;
@@ -233,16 +200,16 @@ DELIMITER ;
 - Виконання
 ```sql
 SELECT 
-    report_year,
-    calculate_year_diff(report_year) AS years_since_report
-FROM (
-    SELECT DISTINCT report_year 
-    FROM disease_reports
-) AS unique_years
-ORDER BY report_year DESC;
+    Year,
+    calculate_year_diff(Year) AS year_difference
+FROM 
+    pandemic.infectious_cases;
 ```
 
 _5_Function.png_
 ![5_Function.png](./5_Function.png)
+
+_5_1_Function.png_
+![5_1_Function.png](./5_1_Function.png)
 
 ---
